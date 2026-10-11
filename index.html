@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DocMorph - Universal Converter Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-900 via-indigo-900 to-slate-900 min-h-screen text-gray-800 flex flex-col justify-between py-10 px-4">
+
+    <div class="max-w-4xl mx-auto w-full">
+        <!-- Header -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-extrabold text-white mt-3 tracking-tight">Konverter Dokumen dan Foto </h1>
+            <p class="text-gray-300 mt-2 text-sm">Pilih bilah kategori di bawah untuk mulai mengonversi dokumen atau foto Anda.</p>
+        </header>
+
+        <!-- (Tab Kategori) -->
+        <div class="flex justify-center mb-6 space-x-2">
+            <button onclick="switchTab('document')" id="tabDoc" class="px-6 py-2.5 rounded-xl font-semibold text-sm transition shadow-md bg-blue-600 text-white flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                <span>Konverter Dokumen</span>
+            </button>
+            <button onclick="switchTab('image')" id="tabImg" class="px-6 py-2.5 rounded-xl font-semibold text-sm transition shadow-md bg-white/20 text-white hover:bg-white/30 flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                <span>Konverter Foto / Gambar</span>
+            </button>
+        </div>
+
+        <!-- Main Card -->
+        <div class="glass-card rounded-3xl shadow-2xl p-6 md:p-10 border border-white/20">
+            <form id="uploadForm" class="space-y-6">
+                <!-- Drag and Drop -->
+                <div id="dropZone" class="border-2 border-dashed border-blue-300/60 rounded-2xl p-8 text-center bg-blue-50/50 hover:bg-blue-100/60 transition-all cursor-pointer group">
+                    <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-2xl mx-auto flex items-center justify-center mb-4 group-hover:scale-110 transition-transform shadow-inner">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                        </svg>
+                    </div>
+                    <p id="dropText" class="text-gray-700 font-semibold text-base">Seret dan letakkan berkas dokumen di sini</p>
+                    <p class="text-gray-400 text-sm mt-1">atau <span class="text-blue-600 font-medium underline">pilih dari perangkat</span></p>
+                    <p id="formatHint" class="text-xs text-gray-400 mt-3 bg-white/80 py-1 px-3 rounded-full inline-block border border-gray-200">Mendukung: .doc, .docx, .xlsx, .ppt, .pptx, .pdf</p>
+                    <input type="file" id="fileInput" name="file" class="hidden">
+                </div>
+
+                <!-- Info Berkas -->
+                <div id="fileInfo" class="hidden p-4 bg-blue-50/80 border border-blue-200 rounded-xl flex items-center justify-between">
+                    <div class="flex items-center space-x-3 truncate">
+                        <svg class="w-6 h-6 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        <span id="fileName" class="font-semibold text-gray-700 text-sm truncate"></span>
+                    </div>
+                    <span id="fileSize" class="text-xs bg-blue-200 text-blue-800 px-2.5 py-1 rounded-md font-medium"></span>
+                </div>
+
+                <!-- Tombol Output -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5 pt-2">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Pilih Format Target</label>
+                        <select id="targetFormat" name="target_format" class="w-full p-3.5 bg-gray-50 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-medium transition">
+                        </select>
+                    </div>
+                    <div class="flex items-end">
+                        <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold p-3.5 rounded-xl transition shadow-lg shadow-blue-500/30">
+                            Mulai Konversi Sekarang
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Area Hasil -->
+            <div id="resultArea" class="hidden mt-8 p-6 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl text-center">
+                <div class="w-12 h-12 bg-emerald-100 text-emerald-600 rounded-full mx-auto flex items-center justify-center mb-3">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                </div>
+                <h3 class="text-lg font-bold text-emerald-800 mb-1">Konversi Berhasil Dilakukan!</h3>
+                <a id="downloadLink" href="#" class="inline-flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-semibold transition shadow-md mt-2">
+                    <span>Unduh Berkas Hasil</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Tabel Riwayat & Tombol Hapus -->
+        <div class="mt-8 glass-card rounded-3xl shadow-xl p-6 border border-white/20">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-bold text-gray-800 flex items-center space-x-2">
+                    <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                    <span>Riwayat Konversi </span>
+                </h2>
+                <div class="space-x-2">
+                    <button onclick="loadHistory()" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-lg font-medium transition">Muat Ulang</button>
+                    <button onclick="clearAllHistory()" class="text-xs bg-red-100 hover:bg-red-200 text-red-600 px-3 py-1.5 rounded-lg font-medium transition">Hapus Semua</button>
+                </div>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse text-xs md:text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-200 text-gray-500 uppercase tracking-wider font-semibold">
+                            <th class="py-3 px-3">Berkas Asli</th>
+                            <th class="py-3 px-3">Dari</th>
+                            <th class="py-3 px-3">Ke</th>
+                            <th class="py-3 px-3">Waktu</th>
+                            <th class="py-3 px-3 text-center">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="historyTableBody" class="divide-y divide-gray-100 text-gray-700"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center mt-12 text-xs text-gray-400">
+        &copy; 2026 DocMorph Converter Pro.
+    </footer>
+
+    <script>
+        let currentMode = 'document'; // 'document' atau 'image'
+
+        const tabDoc = document.getElementById('tabDoc');
+        const tabImg = document.getElementById('tabImg');
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const dropText = document.getElementById('dropText');
+        const formatHint = document.getElementById('formatHint');
+        const targetFormat = document.getElementById('targetFormat');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const uploadForm = document.getElementById('uploadForm');
+        const resultArea = document.getElementById('resultArea');
+        const downloadLink = document.getElementById('downloadLink');
+        const historyTableBody = document.getElementById('historyTableBody');
+
+        function switchTab(mode) {
+            currentMode = mode;
+            resultArea.classList.add('hidden');
+            fileInfo.classList.add('hidden');
+            fileInput.value = '';
+
+            if (mode === 'document') {
+                tabDoc.className = "px-6 py-2.5 rounded-xl font-semibold text-sm transition shadow-md bg-blue-600 text-white flex items-center space-x-2";
+                tabImg.className = "px-6 py-2.5 rounded-xl font-semibold text-sm transition shadow-md bg-white/20 text-white hover:bg-white/30 flex items-center space-x-2";
+                dropText.textContent = "Seret dan letakkan berkas dokumen di sini";
+                formatHint.textContent = "Mendukung: .doc, .docx, .xlsx, .ppt, .pptx, .pdf";
+                fileInput.accept = ".doc,.docx,.xlsx,.ppt,.pptx,.pdf";
+                
+                targetFormat.innerHTML = `
+                    <option value="pdf">PDF Dokumen (.pdf)</option>
+                    <option value="docx">Microsoft Word (.docx)</option>
+                    <option value="xlsx">Microsoft Excel (.xlsx)</option>
+                    <option value="pptx">PowerPoint (.pptx)</option>
+                    <option value="txt">Teks Mentah (.txt)</option>
+                `;
+            } else {
+                tabImg.className = "px-6 py-2.5 rounded-xl font-semibold text-sm transition shadow-md bg-blue-600 text-white flex items-center space-x-2";
+                tabDoc.className = "px-6 py-2.5 rounded-xl font-semibold text-sm transition shadow-md bg-white/20 text-white hover:bg-white/30 flex items-center space-x-2";
+                dropText.textContent = "Seret dan letakkan berkas foto di sini";
+                formatHint.textContent = "Mendukung: .png, .jpg, .jpeg, .webp";
+                fileInput.accept = ".png,.jpg,.jpeg,.webp";
+                
+                targetFormat.innerHTML = `
+                    <option value="png">Gambar PNG (.png)</option>
+                    <option value="jpg">Gambar JPG (.jpg)</option>
+                    <option value="webp">Gambar WebP (.webp)</option>
+                    <option value="pdf">Dokumen PDF (.pdf)</option>
+                `;
+            }
+        }
+
+        switchTab('document');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+        function handleFile(file) {
+            if (file) {
+                fileName.textContent = file.name;
+                fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+                fileInfo.classList.remove('hidden');
+                resultArea.classList.add('hidden');
+            }
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch('http://localhost:8000/api/history');
+                const data = await response.json();
+                historyTableBody.innerHTML = '';
+                
+                if (data.history.length === 0) {
+                    historyTableBody.innerHTML = `<tr><td colspan="5" class="py-4 text-center text-gray-400">Belum ada riwayat konversi.</td></tr>`;
+                    return;
+                }
+
+                data.history.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-gray-50 transition";
+                    row.innerHTML = `
+                        <td class="py-3 px-3 font-medium truncate max-w-[180px]">${item.original_filename}</td>
+                        <td class="py-3 px-3"><span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded uppercase text-xs font-bold">${item.source_format}</span></td>
+                        <td class="py-3 px-3"><span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded uppercase text-xs font-bold">${item.target_format}</span></td>
+                        <td class="py-3 px-3 text-gray-400 text-xs">${item.created_at}</td>
+                        <td class="py-3 px-3 text-center">
+                            <button onclick="deleteItem(${item.id})" class="text-red-500 hover:text-red-700 p-1 rounded transition" title="Hapus Riwayat">
+                                <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </td>
+                    `;
+                    historyTableBody.appendChild(row);
+                });
+            } catch (err) {
+                console.error("Gagal memuat riwayat:", err);
+            }
+        }
+
+        async function deleteItem(id) {
+            if (!confirm("Apakah Anda yakin ingin menghapus riwayat ini?")) return;
+            try {
+                const res = await fetch(`http://localhost:8000/api/history/${id}`, { method: 'DELETE' });
+                if (res.ok) loadHistory();
+            } catch (e) { alert("Gagal menghapus riwayat"); }
+        }
+
+        async function clearAllHistory() {
+            if (!confirm("Apakah Anda yakin ingin menghapus SELURUH riwayat konversi?")) return;
+            try {
+                const res = await fetch('http://localhost:8000/api/history', { method: 'DELETE' });
+                if (res.ok) loadHistory();
+            } catch (e) { alert("Gagal membersihkan riwayat"); }
+        }
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const file = fileInput.files[0];
+            const targetFormatVal = targetFormat.value;
+
+            if (!file) {
+                alert('Silakan pilih berkas terlebih dahulu!');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('target_format', targetFormatVal);
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.textContent = 'Memproses Konversi...';
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch('http://localhost:8000/api/convert', {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    downloadLink.href = `http://localhost:8000${data.download_url}`;
+                    resultArea.classList.remove('hidden');
+                    loadHistory();
+                } else {
+                    alert('Gagal: ' + data.detail);
+                }
+            } catch (err) {
+                alert('Terjadi kesalahan jaringan.');
+            } finally {
+                submitBtn.textContent = 'Mulai Konversi Sekarang';
+                submitBtn.disabled = false;
+            }
+        });
+
+        loadHistory();
+    </script>
+</body>
+</html>
