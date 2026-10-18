@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Converter Image and Document</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass-card { background: rgba(255, 255, 255, 0.92); backdrop-filter: blur(16px); }
+        
+        /* Custom Animations & Keyframes */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-8px); }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .animate-float { animation: float 4s ease-in-out infinite; }
+        .animate-fade-in { animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-blue-950 via-indigo-900 to-slate-900 min-h-screen text-gray-800 flex flex-col justify-between py-8 px-4 sm:px-6 lg:px-8 overflow-x-hidden">
+
+    <!-- Latar Belakang Efek Cahaya Animasi Dinamis -->
+    <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-blue-500/20 rounded-full blur-3xl pointer-events-none animate-pulse"></div>
+    <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl pointer-events-none animate-pulse" style="animation-duration: 6s;"></div>
+
+    <!-- BAGIAN AUTHENTICATION (LOGIN / REGISTER) -->
+    <div id="authContainer" class="w-full max-w-lg mx-auto my-auto animate-fade-in relative z-10">
+        <div class="glass-card rounded-3xl shadow-2xl p-6 sm:p-10 border border-white/30 transition-all duration-500 hover:shadow-indigo-500/10">
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-gradient-to-tr from-blue-600 to-indigo-600 rounded-2xl mx-auto flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-blue-500/40 mb-4 animate-float">
+                    ⚡
+                </div>
+                <h1 id="authTitle" class="text-3xl font-extrabold text-gray-900 tracking-tight transition-all duration-300">Login</h1>
+                <p id="authSubtitle" class="text-gray-500 text-sm mt-1">Masuk untuk konversi dokumen tanpa batas.</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Username</label>
+                    <input type="text" id="authUsername" class="w-full p-3.5 bg-gray-50/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-medium transition-all duration-300 hover:border-blue-300" placeholder="Masukkan username">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Password</label>
+                    <input type="password" id="authPassword" class="w-full p-3.5 bg-gray-50/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-medium transition-all duration-300 hover:border-blue-300" placeholder="Masukkan password">
+                </div>
+                <button onclick="handleAuth()" id="authBtn" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold p-3.5 rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50">
+                    Masuk
+                </button>
+            </div>
+
+            <div class="text-center mt-6 space-y-3">
+                <p id="authSwitchText" class="text-sm text-gray-600">
+                    Belum punya akun? <button onclick="toggleAuthMode()" class="text-blue-600 font-semibold hover:underline transition-colors">Daftar sekarang</button>
+                </p>
+                <button onclick="continueAsGuest()" class="text-xs text-indigo-600 hover:text-indigo-800 hover:underline font-medium block mx-auto transition-colors">
+                    Lewati & Lanjutkan sebagai Tamu (Maks. 5 kali konversi)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- KONTEN UTAMA APLIKASI -->
+    <div id="appContainer" class="w-full max-w-7xl mx-auto hidden flex-grow flex flex-col justify-center animate-fade-in relative z-10">
+        <!-- Header Profil & Logout -->
+        <div class="w-full flex flex-col sm:flex-row justify-between items-center bg-white/10 backdrop-blur-md rounded-2xl p-4 sm:px-6 mb-8 border border-white/15 shadow-xl gap-4 transition-all duration-300 hover:bg-white/15">
+            <div class="flex items-center space-x-3">
+                <div class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-indigo-600 text-white rounded-xl flex items-center justify-center font-bold text-lg shadow-md animate-float">DM</div>
+                <div>
+                    <h2 class="text-white font-bold text-base" id="userDisplayName">Pengguna</h2>
+                    <p class="text-xs text-blue-200 font-medium" id="userStatusInfo">Akun Aktif</p>
+                </div>
+            </div>
+            <button onclick="handleLogout()" id="logoutBtn" class="w-full sm:w-auto bg-red-500/20 hover:bg-red-500 text-red-200 hover:text-white px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 border border-red-500/30 active:scale-95">
+                Keluar (Logout)
+            </button>
+        </div>
+
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight drop-shadow-md">Konverter Dokumen dan Foto</h1>
+            <p class="text-gray-300 mt-2 text-sm sm:text-base">Pilih kategori di bawah untuk mulai mengonversi dokumen atau foto secara instan.</p>
+        </header>
+
+        <!-- Tab Kategori dengan Animasi Transisi -->
+        <div class="flex justify-center mb-8 space-x-3">
+            <button onclick="switchTab('document')" id="tabDoc" class="px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md bg-blue-600 text-white flex items-center space-x-2 transform hover:scale-105 active:scale-95">
+                <span>Konverter Dokumen</span>
+            </button>
+            <button onclick="switchTab('image')" id="tabImg" class="px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md bg-white/20 text-white hover:bg-white/30 flex items-center space-x-2 transform hover:scale-105 active:scale-95">
+                <span>Konverter Foto / Gambar</span>
+            </button>
+        </div>
+
+        <!-- Main Card Fluid Grid Layout -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 w-full">
+            <!-- Kolom Kiri: Form Konversi -->
+            <div class="lg:col-span-6 glass-card rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/30 flex flex-col justify-between transition-all duration-500 hover:shadow-blue-500/10">
+                <form id="uploadForm" class="space-y-6">
+                    <div id="dropZone" class="border-2 border-dashed border-blue-300/70 rounded-2xl p-8 sm:p-12 text-center bg-blue-50/50 hover:bg-blue-100/70 transition-all duration-300 cursor-pointer group transform hover:scale-[1.01]">
+                        <div class="w-14 h-14 bg-blue-100 text-blue-600 rounded-2xl mx-auto flex items-center justify-center mb-4 group-hover:scale-110 group-hover:rotate-6 transition-transform duration-300 shadow-inner">
+                            <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                        </div>
+                        <p id="dropText" class="text-gray-700 font-semibold text-base sm:text-lg transition-colors group-hover:text-blue-700">Seret dan letakkan berkas di sini</p>
+                        <p class="text-gray-400 text-sm mt-1">atau <span class="text-blue-600 font-medium underline">pilih dari perangkat</span></p>
+                        <p id="formatHint" class="text-xs text-gray-500 mt-4 bg-white/90 py-1.5 px-4 rounded-full inline-block border border-gray-200 shadow-xs">Mendukung format dokumen populer</p>
+                        <input type="file" id="fileInput" name="file" class="hidden">
+                    </div>
+
+                    <div id="fileInfo" class="hidden p-4 bg-blue-50/90 border border-blue-200 rounded-xl flex items-center justify-between animate-fade-in shadow-xs">
+                        <div class="flex items-center space-x-3 truncate">
+                            <span id="fileName" class="font-semibold text-gray-700 text-sm truncate"></span>
+                        </div>
+                        <span id="fileSize" class="text-xs bg-blue-200 text-blue-800 px-2.5 py-1 rounded-md font-medium"></span>
+                    </div>
+
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-2">Pilih Format Target</label>
+                            <select id="targetFormat" name="target_format" class="w-full p-3.5 bg-gray-50/80 border border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:bg-white outline-none font-medium transition-all duration-300 hover:border-blue-300"></select>
+                        </div>
+                        <button type="submit" id="submitBtn" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold p-4 rounded-xl transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0 shadow-lg shadow-blue-500/30 hover:shadow-blue-500/50 flex items-center justify-center space-x-2">
+                            <span>Mulai Konversi Sekarang</span>
+                        </button>
+                    </div>
+                </form>
+
+                <div id="resultArea" class="hidden mt-6 p-6 bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 rounded-2xl text-center animate-fade-in shadow-md">
+                    <h3 class="text-lg font-bold text-emerald-800 mb-1">Konversi Berhasil Dilakukan!</h3>
+                    <a id="downloadLink" href="#" class="inline-flex items-center space-x-2 bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 shadow-md mt-2 transform hover:scale-105 active:scale-95">
+                        <span>Unduh Berkas Hasil</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Kolom Kanan: Tabel Riwayat Fluid -->
+            <div class="lg:col-span-6 glass-card rounded-3xl shadow-2xl p-6 sm:p-8 border border-white/30 flex flex-col transition-all duration-500 hover:shadow-indigo-500/10">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-gray-800">Riwayat Konversi</h2>
+                    <div class="space-x-2">
+                        <button onclick="loadHistory()" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-600 px-3 py-1.5 rounded-lg font-medium transition-all active:scale-95">Muat Ulang</button>
+                        <button onclick="clearAllHistory()" class="text-xs bg-red-100 hover:bg-red-200 text-red-600 px-3 py-1.5 rounded-lg font-medium transition-all active:scale-95">Hapus Semua</button>
+                    </div>
+                </div>
+                <div class="overflow-x-auto flex-grow">
+                    <table class="w-full text-left border-collapse text-xs sm:text-sm">
+                        <thead>
+                            <tr class="border-b border-gray-200 text-gray-500 uppercase tracking-wider font-semibold">
+                                <th class="py-3 px-3">Berkas Asli</th>
+                                <th class="py-3 px-3">Dari</th>
+                                <th class="py-3 px-3">Ke</th>
+                                <th class="py-3 px-3">Waktu</th>
+                                <th class="py-3 px-3 text-center">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="historyTableBody" class="divide-y divide-gray-100 text-gray-700"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center mt-12 text-xs text-gray-400 relative z-10">
+        &copy; 2026 Kelompok 1. All rights reserved.
+    </footer>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let isLoginMode = true;
+
+        function toggleAuthMode() {
+            isLoginMode = !isLoginMode;
+            const title = document.getElementById('authTitle');
+            const subtitle = document.getElementById('authSubtitle');
+            const btn = document.getElementById('authBtn');
+            const switchText = document.getElementById('authSwitchText');
+
+            if (isLoginMode) {
+                title.textContent = "Login";
+                subtitle.textContent = "Masuk untuk konversi dokumen tanpa batas.";
+                btn.textContent = "Masuk";
+                switchText.innerHTML = `Belum punya akun? <button onclick="toggleAuthMode()" class="text-blue-600 font-semibold hover:underline">Daftar sekarang</button>`;
+            } else {
+                title.textContent = "Register";
+                subtitle.textContent = "Buat akun baru untuk menggunakan layanan.";
+                btn.textContent = "Daftar";
+                switchText.innerHTML = `Sudah punya akun? <button onclick="toggleAuthMode()" class="text-blue-600 font-semibold hover:underline">Masuk di sini</button>`;
+            }
+        }
+
+        async function handleAuth() {
+            const username = document.getElementById('authUsername').value.trim();
+            const password = document.getElementById('authPassword').value.trim();
+
+            if (!username || !password) {
+                alert('Username dan password tidak boleh kosong!');
+                return;
+            }
+
+            const endpoint = isLoginMode ? '/api/login' : '/api/register';
+
+            try {
+                const res = await fetch(`${API_BASE}${endpoint}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+
+                if (res.ok) {
+                    if (isLoginMode) {
+                        localStorage.setItem('docmorph_user', data.username);
+                        showApp(data.username, false);
+                    } else {
+                        alert(data.message);
+                        toggleAuthMode();
+                    }
+                } else {
+                    alert(data.detail || 'Terjadi kesalahan.');
+                }
+            } catch (err) {
+                alert('Gagal terhubung ke server.');
+            }
+        }
+
+        function continueAsGuest() {
+            showApp('Tamu (Guest)', true);
+        }
+
+        function showApp(username, isGuest) {
+            document.getElementById('authContainer').classList.add('hidden');
+            document.getElementById('appContainer').classList.remove('hidden');
+            document.getElementById('userDisplayName').textContent = username;
+            
+            if (isGuest) {
+                let currentCount = parseInt(localStorage.getItem('guest_conversion_count') || '0');
+                document.getElementById('userStatusInfo').textContent = `Mode Tamu (${5 - currentCount} kesempatan tersisa)`;
+                document.getElementById('logoutBtn').textContent = 'Login Akun';
+            } else {
+                document.getElementById('userStatusInfo').textContent = 'Akun Terdaftar (Tanpa Batas)';
+                document.getElementById('logoutBtn').textContent = 'Keluar (Logout)';
+            }
+            loadHistory();
+        }
+
+        function handleLogout() {
+            localStorage.removeItem('docmorph_user');
+            document.getElementById('appContainer').classList.add('hidden');
+            document.getElementById('authContainer').classList.remove('hidden');
+            document.getElementById('authUsername').value = '';
+            document.getElementById('authPassword').value = '';
+        }
+
+        window.onload = function() {
+            const savedUser = localStorage.getItem('docmorph_user');
+            if (savedUser) {
+                showApp(savedUser, false);
+            } else {
+                switchTab('document');
+            }
+        }
+
+        let currentMode = 'document';
+        const tabDoc = document.getElementById('tabDoc');
+        const tabImg = document.getElementById('tabImg');
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const dropText = document.getElementById('dropText');
+        const formatHint = document.getElementById('formatHint');
+        const targetFormat = document.getElementById('targetFormat');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const uploadForm = document.getElementById('uploadForm');
+        const resultArea = document.getElementById('resultArea');
+        const downloadLink = document.getElementById('downloadLink');
+        const historyTableBody = document.getElementById('historyTableBody');
+
+        function switchTab(mode) {
+            currentMode = mode;
+            resultArea.classList.add('hidden');
+            fileInfo.classList.add('hidden');
+            fileInput.value = '';
+
+            if (mode === 'document') {
+                tabDoc.className = "px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md bg-blue-600 text-white flex items-center space-x-2 transform hover:scale-105 active:scale-95";
+                tabImg.className = "px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md bg-white/20 text-white hover:bg-white/30 flex items-center space-x-2 transform hover:scale-105 active:scale-95";
+                dropText.textContent = "Seret dan letakkan berkas dokumen di sini";
+                formatHint.textContent = "Mendukung: .doc, .docx, .xlsx, .ppt, .pptx, .pdf";
+                fileInput.accept = ".doc,.docx,.xlsx,.ppt,.pptx,.pdf";
+                targetFormat.innerHTML = `
+                    <option value="pdf">PDF Dokumen (.pdf)</option>
+                    <option value="docx">Microsoft Word (.docx)</option>
+                    <option value="xlsx">Microsoft Excel (.xlsx)</option>
+                    <option value="pptx">PowerPoint (.pptx)</option>
+                    <option value="txt">Teks Mentah (.txt)</option>
+                `;
+            } else {
+                tabImg.className = "px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md bg-blue-600 text-white flex items-center space-x-2 transform hover:scale-105 active:scale-95";
+                tabDoc.className = "px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md bg-white/20 text-white hover:bg-white/30 flex items-center space-x-2 transform hover:scale-105 active:scale-95";
+                dropText.textContent = "Seret dan letakkan berkas foto di sini";
+                formatHint.textContent = "Mendukung: .png, .jpg, .jpeg, .webp";
+                fileInput.accept = ".png,.jpg,.jpeg,.webp";
+                targetFormat.innerHTML = `
+                    <option value="png">Gambar PNG (.png)</option>
+                    <option value="jpg">Gambar JPG (.jpg)</option>
+                    <option value="webp">Gambar WebP (.webp)</option>
+                    <option value="pdf">Dokumen PDF (.pdf)</option>
+                `;
+            }
+        }
+
+        dropZone.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+
+        function handleFile(file) {
+            if (file) {
+                fileName.textContent = file.name;
+                fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+                fileInfo.classList.remove('hidden');
+                resultArea.classList.add('hidden');
+            }
+        }
+
+        async function loadHistory() {
+            try {
+                const response = await fetch(`${API_BASE}/api/history`);
+                const data = await response.json();
+                historyTableBody.innerHTML = '';
+                
+                if (data.history.length === 0) {
+                    historyTableBody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-gray-400">Belum ada riwayat konversi.</td></tr>`;
+                    return;
+                }
+
+                data.history.forEach(item => {
+                    const row = document.createElement('tr');
+                    row.className = "hover:bg-blue-50/50 transition-colors duration-200";
+                    row.innerHTML = `
+                        <td class="py-3 px-3 font-medium truncate max-w-[140px] sm:max-w-[180px]">${item.original_filename}</td>
+                        <td class="py-3 px-3"><span class="bg-gray-100 text-gray-700 px-2 py-0.5 rounded uppercase text-xs font-bold">${item.source_format}</span></td>
+                        <td class="py-3 px-3"><span class="bg-blue-100 text-blue-700 px-2 py-0.5 rounded uppercase text-xs font-bold">${item.target_format}</span></td>
+                        <td class="py-3 px-3 text-gray-400 text-xs">${item.created_at}</td>
+                        <td class="py-3 px-3 text-center">
+                            <button onclick="deleteItem(${item.id})" class="text-red-500 hover:text-red-700 p-1 rounded-lg transition-transform hover:scale-110 active:scale-95" title="Hapus Riwayat">
+                                <svg class="w-4 h-4 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                            </button>
+                        </td>
+                    `;
+                    historyTableBody.appendChild(row);
+                });
+            } catch (err) {
+                console.error("Gagal memuat riwayat:", err);
+            }
+        }
+
+        async function deleteItem(id) {
+            if (!confirm("Apakah Anda yakin ingin menghapus riwayat ini?")) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/history/${id}`, { method: 'DELETE' });
+                if (res.ok) loadHistory();
+            } catch (e) { alert("Gagal menghapus riwayat"); }
+        }
+
+        async function clearAllHistory() {
+            if (!confirm("Apakah Anda yakin ingin menghapus SELURUH riwayat konversi?")) return;
+            try {
+                const res = await fetch(`${API_BASE}/api/history`, { method: 'DELETE' });
+                if (res.ok) loadHistory();
+            } catch (e) { alert("Gagal membersihkan riwayat"); }
+        }
+
+        uploadForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const loggedUser = localStorage.getItem('docmorph_user');
+            if (!loggedUser) {
+                let guestCount = parseInt(localStorage.getItem('guest_conversion_count') || '0');
+                if (guestCount >= 5) {
+                    alert('Anda telah mencapai batas maksimal 5 kali konversi gratis sebagai Tamu (Guest). Silakan login atau daftar akun untuk melakukan konversi tanpa batas!');
+                    return;
+                }
+            }
+
+            const file = fileInput.files[0];
+            const targetFormatVal = targetFormat.value;
+
+            if (!file) {
+                alert('Silakan pilih berkas terlebih dahulu!');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('target_format', targetFormatVal);
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.innerHTML = `
+                <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Memproses Konversi...
+            `;
+            submitBtn.disabled = true;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/convert`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+
+                if (response.ok) {
+                    downloadLink.href = `${API_BASE}${data.download_url}`;
+                    resultArea.classList.remove('hidden');
+                    
+                    if (!loggedUser) {
+                        let guestCount = parseInt(localStorage.getItem('guest_conversion_count') || '0');
+                        guestCount += 1;
+                        localStorage.setItem('guest_conversion_count', guestCount);
+                        document.getElementById('userStatusInfo').textContent = `Mode Tamu (${5 - guestCount} kesempatan tersisa)`;
+                    }
+
+                    loadHistory();
+                } else {
+                    alert('Gagal: ' + data.detail);
+                }
+            } catch (err) {
+                alert('Terjadi kesalahan jaringan.');
+            } finally {
+                submitBtn.innerHTML = '<span>Mulai Konversi Sekarang</span>';
+                submitBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
