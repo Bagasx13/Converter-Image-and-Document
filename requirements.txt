@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pypdf
+python-docx
+openpyxl
+python-pptx
+Pillow
+reportlab
+pydantic
+python-multipart
