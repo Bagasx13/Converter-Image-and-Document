@@ -48,20 +48,26 @@ def _find_soffice():
         "soffice", "libreoffice",
         r"C:\Program Files\LibreOffice\program\soffice.exe",
         r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
+        r"C:\Program Files\LibreOffice 7\program\soffice.exe",
+        r"C:\Program Files\LibreOffice 24\program\soffice.exe",
         "/usr/bin/soffice", "/usr/bin/libreoffice",
+        "/snap/bin/libreoffice",
         "/Applications/LibreOffice.app/Contents/MacOS/soffice",
     ]
     for c in candidates:
         try:
             if os.path.sep in c or (len(c) > 1 and c[1] == ":"):
                 if os.path.exists(c):
+                    print(f"[LibreOffice] Ditemukan: {c}")
                     return c
             else:
                 found = which(c)
                 if found:
+                    print(f"[LibreOffice] Ditemukan via PATH: {found}")
                     return found
         except Exception:
             continue
+    print("[LibreOffice] TIDAK DITEMUKAN — konversi akan pakai fallback ReportLab (kualitas terbatas)")
     return None
 
 
@@ -158,6 +164,10 @@ def pdf_to_pptx(input_path: str, output_path: str) -> bool:
 # HELPER: DOCX / PPTX -> PDF via ReportLab (fallback)
 # ============================================================
 def office_to_pdf_fallback(input_path: str, output_path: str, ext: str):
+    """Fallback ReportLab. Kualitas terbatas: hanya teks + tabel + gambar statis."""
+    from reportlab.platypus import Image as RLImage
+    import io as _io
+
     pdf_doc = SimpleDocTemplate(
         output_path,
         pagesize=landscape(letter),
@@ -186,21 +196,78 @@ def office_to_pdf_fallback(input_path: str, output_path: str, ext: str):
                 ]))
                 story.append(Spacer(1, 6))
                 story.append(t)
+
     elif ext in ["ppt", "pptx"]:
         prs = Presentation(input_path)
+        total = len(prs.slides)
+        story.append(Paragraph("<b>Hasil Konversi PowerPoint</b>", styles['Title']))
+        story.append(Paragraph(
+            "<i>Catatan: Install LibreOffice untuk hasil konversi yang mempertahankan "
+            "layout, gambar, dan desain asli.</i>", styles['Italic']))
+        story.append(Spacer(1, 14))
+
         for idx, slide in enumerate(prs.slides, 1):
-            story.append(Paragraph(f"<b>SLIDE {idx}</b>", styles['Heading1']))
-            story.append(Spacer(1, 8))
-            has_content = False
+            # Kumpulkan teks & gambar dari slide
+            texts = []
+            images = []
             for shape in slide.shapes:
+                # Teks
                 if shape.has_text_frame:
                     for p in shape.text_frame.paragraphs:
                         if p.text.strip():
-                            story.append(Paragraph(html.escape(p.text), styles['Normal']))
-                            story.append(Spacer(1, 4))
-                            has_content = True
-            if not has_content:
-                story.append(Paragraph("<i>(Slide kosong atau berupa gambar)</i>", styles['Normal']))
+                            texts.append(p.text.strip())
+                # Gambar (PIL picture)
+                try:
+                    if shape.shape_type == 13:  # MSO_SHAPE_TYPE.PICTURE
+                        img_bytes = shape.image.blob
+                        images.append(img_bytes)
+                except Exception:
+                    pass
+                # Tabel
+                if getattr(shape, "has_table", False) and shape.has_table:
+                    tbl_data = []
+                    for row in shape.table.rows:
+                        tbl_data.append([cell.text for cell in row.cells])
+                    if tbl_data:
+                        t = Table(tbl_data)
+                        t.setStyle(TableStyle([
+                            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                            ('FONTSIZE', (0, 0), (-1, -1), 8),
+                        ]))
+                        story.append(t)
+                        story.append(Spacer(1, 6))
+
+            # Header slide
+            story.append(Paragraph(f"<b>SLIDE {idx} dari {total}</b>", styles['Heading2']))
+            story.append(Spacer(1, 6))
+
+            # Gambar (maks 2 per slide supaya tidak kepanjangan)
+            for ib in images[:2]:
+                try:
+                    img = RLImage(_io.BytesIO(ib))
+                    # skala agar muat
+                    max_w, max_h = 600, 350
+                    ratio = min(max_w / img.drawWidth, max_h / img.drawHeight, 1.0)
+                    img.drawWidth *= ratio
+                    img.drawHeight *= ratio
+                    story.append(img)
+                    story.append(Spacer(1, 6))
+                except Exception:
+                    pass
+
+            # Teks
+            if texts:
+                # Gabung tapi hindari duplikat beruntun
+                seen = None
+                for t in texts:
+                    if t != seen:
+                        story.append(Paragraph(html.escape(t), styles['Normal']))
+                        story.append(Spacer(1, 3))
+                        seen = t
+            elif not images:
+                story.append(Paragraph("<i>(Slide kosong / hanya berisi shape grafis)</i>",
+                                       styles['Italic']))
+
             story.append(PageBreak())
 
     if story:
