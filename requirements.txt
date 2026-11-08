@@ -1,5 +1,6 @@
 fastapi
 uvicorn
+python-multipart
 pypdf
 python-docx
 openpyxl
@@ -7,4 +8,5 @@ python-pptx
 Pillow
 reportlab
 pydantic
-python-multipart
+pdf2docx
+PyMuPDF
