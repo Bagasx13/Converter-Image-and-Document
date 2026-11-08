@@ -642,4 +642,8 @@ async def serve_home():
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("main:app", host="127.0.0.1", port=8000, reload=True)
+    import os
+    # Railway memberikan environment variable PORT. Default ke 8000 jika dijalankan lokal.
+    port = int(os.environ.get("PORT", 8000))
+    # Wajib host 0.0.0.0 agar bisa diakses dari luar container
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
