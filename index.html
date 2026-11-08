@@ -281,38 +281,38 @@
         const historyTableBody = document.getElementById('historyTableBody');
 
         function switchTab(mode) {
-            currentMode = mode;
-            resultArea.classList.add('hidden');
-            fileInfo.classList.add('hidden');
-            fileInput.value = '';
+        currentMode = mode;
+        resultArea.classList.add('hidden');
+        fileInfo.classList.add('hidden');
+        fileInput.value = '';
 
-            if (mode === 'document') {
-                tabDoc.className = "px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md bg-blue-600 text-white flex items-center space-x-2 transform hover:scale-105 active:scale-95";
-                tabImg.className = "px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md bg-white/20 text-white hover:bg-white/30 flex items-center space-x-2 transform hover:scale-105 active:scale-95";
-                dropText.textContent = "Seret dan letakkan berkas dokumen di sini";
-                formatHint.textContent = "Mendukung: .doc, .docx, .xlsx, .ppt, .pptx, .pdf";
-                fileInput.accept = ".doc,.docx,.xlsx,.ppt,.pptx,.pdf";
-                targetFormat.innerHTML = `
-                    <option value="pdf">PDF Dokumen (.pdf)</option>
-                    <option value="docx">Microsoft Word (.docx)</option>
-                    <option value="xlsx">Microsoft Excel (.xlsx)</option>
-                    <option value="pptx">PowerPoint (.pptx)</option>
-                    <option value="txt">Teks Mentah (.txt)</option>
-                `;
-            } else {
-                tabImg.className = "px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md bg-blue-600 text-white flex items-center space-x-2 transform hover:scale-105 active:scale-95";
-                tabDoc.className = "px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md bg-white/20 text-white hover:bg-white/30 flex items-center space-x-2 transform hover:scale-105 active:scale-95";
-                dropText.textContent = "Seret dan letakkan berkas foto di sini";
-                formatHint.textContent = "Mendukung: .png, .jpg, .jpeg, .webp";
-                fileInput.accept = ".png,.jpg,.jpeg,.webp";
-                targetFormat.innerHTML = `
-                    <option value="png">Gambar PNG (.png)</option>
-                    <option value="jpg">Gambar JPG (.jpg)</option>
-                    <option value="webp">Gambar WebP (.webp)</option>
-                    <option value="pdf">Dokumen PDF (.pdf)</option>
-                `;
-            }
+        if (mode === 'document') {
+            tabDoc.className = "px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md bg-blue-600 text-white flex items-center space-x-2 transform hover:scale-105 active:scale-95";
+            tabImg.className = "px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md bg-white/20 text-white hover:bg-white/30 flex items-center space-x-2 transform hover:scale-105 active:scale-95";
+            dropText.textContent = "Seret dan letakkan berkas dokumen di sini";
+            formatHint.textContent = "Mendukung: .doc, .docx, .xls, .xlsx, .ppt, .pptx, .pdf";
+            fileInput.accept = ".doc,.docx,.xls,.xlsx,.ppt,.pptx,.pdf";
+            targetFormat.innerHTML = `
+                <option value="pdf">PDF Dokumen (.pdf)</option>
+                <option value="docx">Microsoft Word (.docx)</option>
+                <option value="pptx">PowerPoint (.pptx)</option>
+                <option value="xlsx">Microsoft Excel (.xlsx)</option>
+                <option value="txt">Teks Mentah (.txt)</option>
+            `;
+        } else {
+            tabImg.className = "px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md bg-blue-600 text-white flex items-center space-x-2 transform hover:scale-105 active:scale-95";
+            tabDoc.className = "px-6 py-3 rounded-xl font-semibold text-sm transition-all duration-300 shadow-md bg-white/20 text-white hover:bg-white/30 flex items-center space-x-2 transform hover:scale-105 active:scale-95";
+            dropText.textContent = "Seret dan letakkan berkas foto di sini";
+            formatHint.textContent = "Mendukung: .png, .jpg, .jpeg, .webp";
+            fileInput.accept = ".png,.jpg,.jpeg,.webp";
+            targetFormat.innerHTML = `
+                <option value="png">Gambar PNG (.png)</option>
+                <option value="jpg">Gambar JPG (.jpg)</option>
+                <option value="webp">Gambar WebP (.webp)</option>
+                <option value="pdf">Dokumen PDF (.pdf)</option>
+            `;
         }
+    }
 
         dropZone.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
