@@ -43,36 +43,59 @@ os.makedirs(OUTPUT_DIR, exist_ok=True)
 # HELPER: Deteksi LibreOffice (untuk konversi kualitas tinggi)
 # ============================================================
 def _find_soffice():
-    """Cari executable LibreOffice (soffice) di sistem."""
+    """Cari executable LibreOffice (soffice) di sistem — versi robust + logging."""
     candidates = [
         "soffice", "libreoffice",
+        # Windows — berbagai versi
         r"C:\Program Files\LibreOffice\program\soffice.exe",
         r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
         r"C:\Program Files\LibreOffice 7\program\soffice.exe",
         r"C:\Program Files\LibreOffice 24\program\soffice.exe",
+        r"C:\Program Files\LibreOffice 25\program\soffice.exe",
+        # Linux
         "/usr/bin/soffice", "/usr/bin/libreoffice",
         "/snap/bin/libreoffice",
+        "/opt/libreoffice/program/soffice",
+        # macOS
         "/Applications/LibreOffice.app/Contents/MacOS/soffice",
     ]
+
+    # 1. Cek kandidat langsung
     for c in candidates:
         try:
             if os.path.sep in c or (len(c) > 1 and c[1] == ":"):
                 if os.path.exists(c):
-                    print(f"[LibreOffice] Ditemukan: {c}")
+                    print(f"[LibreOffice] ✅ Ditemukan: {c}")
                     return c
             else:
                 found = which(c)
                 if found:
-                    print(f"[LibreOffice] Ditemukan via PATH: {found}")
+                    print(f"[LibreOffice] ✅ Ditemukan via PATH: {found}")
                     return found
         except Exception:
             continue
-    print("[LibreOffice] TIDAK DITEMUKAN — konversi akan pakai fallback ReportLab (kualitas terbatas)")
+
+    # 2. Windows: scan folder Program Files bila tidak ketemu
+    if os.name == "nt":
+        for base in [r"C:\Program Files", r"C:\Program Files (x86)"]:
+            if os.path.isdir(base):
+                try:
+                    for entry in os.listdir(base):
+                        if entry.lower().startswith("libreoffice"):
+                            candidate = os.path.join(base, entry, "program", "soffice.exe")
+                            if os.path.exists(candidate):
+                                print(f"[LibreOffice] ✅ Ditemukan via scan: {candidate}")
+                                return candidate
+                except Exception:
+                    pass
+
+    print("[LibreOffice] ❌ TIDAK DITEMUKAN.")
+    print("           → Install LibreOffice agar konversi PPT/DOCX mempertahankan desain asli.")
+    print("           → https://www.libreoffice.org/download/")
     return None
 
 
 SOFFICE = _find_soffice()
-
 
 def convert_with_libreoffice(input_path: str, output_path: str, target_ext: str) -> bool:
     """Konversi menggunakan LibreOffice headless. Return True jika berhasil."""
@@ -86,7 +109,7 @@ def convert_with_libreoffice(input_path: str, output_path: str, target_ext: str)
             "--outdir", out_dir,
             input_path,
         ]
-        result = subprocess.run(cmd, capture_output=True, timeout=120)
+        result = subprocess.run(cmd, capture_output=True, timeout=300)
         if result.returncode != 0:
             print(f"[LibreOffice] stderr: {result.stderr.decode(errors='ignore')}")
             return False
@@ -439,34 +462,47 @@ async def convert_document(
 
         # 4. Semua -> PDF
         elif target_format == "pdf":
-            if ext in office_exts and SOFFICE:
-                # Prioritas LibreOffice (mempertahankan layout, gambar, tabel)
+            # Format office yang butuh rendering visual: WAJIB LibreOffice
+            if ext in ["doc", "docx", "ppt", "pptx"]:
+                if not SOFFICE:
+                    raise Exception(
+                        "Konversi PPT/DOCX → PDF membutuhkan LibreOffice agar desain asli "
+                        "tetap terjaga. Silakan install LibreOffice dari "
+                        "https://www.libreoffice.org/download/ lalu restart server."
+                    )
                 if not convert_with_libreoffice(input_path, output_path, "pdf"):
-                    office_to_pdf_fallback(input_path, output_path, ext)
-            elif ext in ["doc", "docx", "ppt", "pptx"]:
-                office_to_pdf_fallback(input_path, output_path, ext)
-            elif ext == "xlsx":
-                wb = openpyxl.load_workbook(input_path, data_only=True)
-                sheet = wb.active
-                pdf_doc = SimpleDocTemplate(output_path, pagesize=landscape(letter),
-                                            rightMargin=40, leftMargin=40,
-                                            topMargin=40, bottomMargin=40)
-                styles = getSampleStyleSheet()
-                story = [Paragraph("<b>Dokumen Excel (.xlsx)</b>", styles['Heading1']), Spacer(1, 10)]
-                data = []
-                for row in sheet.iter_rows(values_only=True):
-                    row_data = [html.escape(str(c)) if c is not None else "" for c in row]
-                    if any(row_data):
-                        data.append(row_data[:8])
-                if data:
-                    t = Table(data[:60])
-                    t.setStyle(TableStyle([
-                        ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
-                        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
-                        ('FONTSIZE', (0, 0), (-1, -1), 8)
-                    ]))
-                    story.append(t)
-                pdf_doc.build(story)
+                    raise Exception(
+                        "LibreOffice gagal merender file. Pastikan file tidak rusak dan "
+                        "LibreOffice versi terbaru sudah terinstall."
+                    )
+
+            # Excel → PDF (boleh pakai LibreOffice kalau ada, kalau tidak pakai ReportLab tabel)
+            elif ext in ["xls", "xlsx"]:
+                if SOFFICE and convert_with_libreoffice(input_path, output_path, "pdf"):
+                    pass
+                else:
+                    wb = openpyxl.load_workbook(input_path, data_only=True)
+                    sheet = wb.active
+                    pdf_doc = SimpleDocTemplate(output_path, pagesize=landscape(letter),
+                                                rightMargin=40, leftMargin=40,
+                                                topMargin=40, bottomMargin=40)
+                    styles = getSampleStyleSheet()
+                    story = [Paragraph("<b>Dokumen Excel (.xlsx)</b>", styles['Heading1']), Spacer(1, 10)]
+                    data = []
+                    for row in sheet.iter_rows(values_only=True):
+                        row_data = [html.escape(str(c)) if c is not None else "" for c in row]
+                        if any(row_data):
+                            data.append(row_data[:8])
+                    if data:
+                        t = Table(data[:60])
+                        t.setStyle(TableStyle([
+                            ('BACKGROUND', (0, 0), (-1, 0), colors.lightgrey),
+                            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                            ('FONTSIZE', (0, 0), (-1, -1), 8)
+                        ]))
+                        story.append(t)
+                    pdf_doc.build(story)
+
             elif ext == "pdf":
                 shutil.copy(input_path, output_path)
             else:
